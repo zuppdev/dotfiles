@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Minimal, near-invisible border. Previous was a 6pt iris line at 75% alpha.
+options=(
+	style=round
+	width=2.0
+	hidpi=off
+	active_color=0x30c4a7e7     # iris at ~19% alpha - barely there
+	inactive_color=0x00000000   # fully transparent
+)
+
+borders "${options[@]}"

@@ -1,0 +1,42 @@
+# ~/.config/starship.toml - Rosé Pine.
+#
+# Two lines: a rule carrying the Apple logo, the home glyph and the path, then
+# the prompt character under it. The format is explicit, so only os, directory
+# and git can ever appear - node, java, gcloud and the rest cannot widen it.
+
+add_newline = false
+
+format = """[╭─](bold #e0def4) $os$directory$git_branch$git_state$git_status
+$character"""
+
+[os]
+disabled = false
+format = "[$symbol]($style) "
+style = "bold #e0def4"
+
+[os.symbols]
+Macos = ""
+
+[directory]
+style = "bold #3e8fb0"
+# The house belongs to $HOME, so it shows there and nowhere else. Two spaces,
+# not one: the glyph is double-width, so the first space falls inside its own
+# cell and leaves almost no visible gap.
+home_symbol = "  ~"
+read_only = " "
+read_only_style = "bold #eb6f92"
+truncation_length = 3
+
+[character]
+success_symbol = "[❯](bold #9ccfd8)"
+error_symbol = "[❯](bold #eb6f92)"
+vicmd_symbol = "[❮](bold #c4a7e7)"
+
+[git_branch]
+style = "bold #ea9a97"
+
+[git_state]
+style = "bold #c4a7e7"
+
+[git_status]
+style = "bold #f6c177"

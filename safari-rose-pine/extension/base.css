@@ -1,0 +1,63 @@
+/* Values come through custom properties because this sheet is static and
+ * injected before the engine knows which palette variant is selected; the
+ * fallbacks are Moon, which is the default. The engine sets the real values
+ * on <html> as soon as it has read the setting.
+ *
+ * Injected at document_start, gated on an attribute the engine sets, so a
+ * disabled site is never painted dark for a frame. It covers the two things
+ * the per-element pass cannot: the canvas before any element has been
+ * walked, and pseudo-elements, which have no element of their own to read a
+ * computed style from and so inherit from these defaults instead. */
+
+html[data-rose-pine] {
+  background-color: var(--rp-base, #232136) !important;
+  color-scheme: dark !important;
+}
+
+/* !important on the body too. Without it a site that sets its own body
+ * background wins, and if the engine then fails for any reason the page is
+ * left in the worst possible state: the site's white background with our
+ * light text on top of it. The engine writes inline !important, which still
+ * outranks this, so nothing is lost when it does run. */
+html[data-rose-pine] body {
+  background-color: var(--rp-base, #232136) !important;
+  color: var(--rp-text, #e0def4) !important;
+}
+
+html[data-rose-pine] ::selection {
+  background-color: var(--rp-hl-med, #44415a);
+  color: var(--rp-text, #e0def4);
+}
+
+html[data-rose-pine] ::placeholder {
+  color: var(--rp-muted, #6e6a86) !important;
+  opacity: 1;
+}
+
+/* Form controls are drawn by the engine, not by CSS, so they follow
+ * color-scheme rather than any colour we set. */
+html[data-rose-pine] input,
+html[data-rose-pine] textarea,
+html[data-rose-pine] select,
+html[data-rose-pine] button {
+  color-scheme: dark;
+}
+
+html[data-rose-pine] ::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+html[data-rose-pine] ::-webkit-scrollbar-track {
+  background-color: var(--rp-surface, #2a273f);
+}
+html[data-rose-pine] ::-webkit-scrollbar-thumb {
+  background-color: var(--rp-hl-med, #44415a);
+  border-radius: 6px;
+  border: 3px solid var(--rp-surface, #2a273f);
+}
+html[data-rose-pine] ::-webkit-scrollbar-thumb:hover {
+  background-color: var(--rp-hl-high, #56526e);
+}
+html[data-rose-pine] ::-webkit-scrollbar-corner {
+  background-color: var(--rp-surface, #2a273f);
+}

@@ -1,0 +1,119 @@
+diff --git a/pdf_viewer/config.cpp b/pdf_viewer/config.cpp
+index a76c8d6..fbb3ba6 100644
+--- a/pdf_viewer/config.cpp
++++ b/pdf_viewer/config.cpp
+@@ -10,11 +10,18 @@ int STATUS_BAR_FONT_SIZE = -1;
+ float BACKGROUND_COLOR[3] = { 0.97f, 0.97f, 0.97f };
+ float DARK_MODE_BACKGROUND_COLOR[3] = { 0.0f, 0.0f, 0.0f };
+ float CUSTOM_COLOR_MODE_EMPTY_BACKGROUND_COLOR[3] = { 0.0f, 0.0f, 0.0f };
++// Custom colour mode maps four basis colours; the blue basis is what keeps
++// LaTeX hyperref links blue. Negative means "use upstream's formula".
++float CUSTOM_BLUE_COLOR[3] = { -1.0f, -1.0f, -1.0f };
+ float RULER_COLOR[3] = { 0.5f, 0.5f, 0.5f };
+ float RULER_MARKER_COLOR[3] = { 1.0f, 0.0f, 0.0f };
+ float CUSTOM_BACKGROUND_COLOR[3] = { 0.18f, 0.204f, 0.251f };
+ float CUSTOM_TEXT_COLOR[3] = { 0.847f, 0.871f, 0.914f };
+ float STATUS_BAR_COLOR[3] = { 0.0f, 0.0f, 0.0f };
++// Opacity of the status bar background. The status label is stacked above
++// the GL widget (opengl_widget->stackUnder(status_label)), so below 1.0 the
++// page shows through it. 1.0 keeps upstream's opaque bar.
++float STATUS_BAR_ALPHA = 1.0f;
+ float STATUS_BAR_TEXT_COLOR[3] = { 1.0f, 1.0f, 1.0f };
+ float UI_TEXT_COLOR[3] = { 1.0f, 1.0f, 1.0f };
+ float UI_BACKGROUND_COLOR[3] = { 0.0f, 0.0f, 0.0f };
+@@ -908,9 +915,11 @@ ConfigManager::ConfigManager(const Path& default_path, const Path& auto_path, co
+     add_color3(L"background_color", BACKGROUND_COLOR);
+     add_color3(L"dark_mode_background_color", DARK_MODE_BACKGROUND_COLOR);
+     add_color3(L"custom_color_mode_empty_background_color", CUSTOM_COLOR_MODE_EMPTY_BACKGROUND_COLOR);
++    add_color3(L"custom_blue_color", CUSTOM_BLUE_COLOR);
+     add_color3(L"custom_background_color", CUSTOM_BACKGROUND_COLOR);
+     add_color3(L"custom_text_color", CUSTOM_TEXT_COLOR);
+     add_color3(L"status_bar_color", STATUS_BAR_COLOR);
++    add_float(L"status_bar_alpha", &STATUS_BAR_ALPHA, FloatExtras{0.0f, 1.0f});
+     add_color3(L"status_bar_text_color", STATUS_BAR_TEXT_COLOR);
+     add_color3(L"page_separator_color", PAGE_SEPARATOR_COLOR);
+     add_color3(L"ui_selected_background_color", UI_SELECTED_BACKGROUND_COLOR);
+diff --git a/pdf_viewer/main_widget.cpp b/pdf_viewer/main_widget.cpp
+index 66e68fa..949ffc7 100644
+--- a/pdf_viewer/main_widget.cpp
++++ b/pdf_viewer/main_widget.cpp
+@@ -958,7 +958,9 @@ MainWidget::MainWidget(fz_context* mupdf_context,
+     status_label_right->setFont(label_font);
+ 
+     QHBoxLayout* status_label_layout = new QHBoxLayout();
+-    status_label_layout->setContentsMargins(0, 0, 0, 0);
++    // Upstream has no margins, so the readout sits flush against the window
++    // edge and the first glyph is clipped by the rounded corner.
++    status_label_layout->setContentsMargins(12, 0, 12, 0);
+ 
+     status_label_layout->addWidget(status_label_left, 1);
+     status_label_layout->addWidget(status_label_right);
+diff --git a/pdf_viewer/pdf_view_opengl_widget.cpp b/pdf_viewer/pdf_view_opengl_widget.cpp
+index 3c6bd36..511e559 100644
+--- a/pdf_viewer/pdf_view_opengl_widget.cpp
++++ b/pdf_viewer/pdf_view_opengl_widget.cpp
+@@ -31,6 +31,7 @@ extern float GAMMA;
+ extern float BACKGROUND_COLOR[3];
+ extern float DARK_MODE_BACKGROUND_COLOR[3];
+ extern float CUSTOM_COLOR_MODE_EMPTY_BACKGROUND_COLOR[3];
++extern float CUSTOM_BLUE_COLOR[3];
+ extern float DARK_MODE_CONTRAST;
+ extern float ZOOM_INC_FACTOR;
+ extern float SCROLL_ZOOM_INC_FACTOR;
+@@ -2794,10 +2795,18 @@ std::vector<DocumentRect> PdfViewOpenGLWidget::get_highlight_word_rects() {
+ 
+ void PdfViewOpenGLWidget::get_custom_color_transform_matrix(float matrix_data[16]) {
+     float inputs_inverse[16] = { 0, 1, 0, 0, -1, 1, -1, 1, 1, -1, 0, 0, 0, -1, 1, 0 };
++    // The four columns are where the white, black, red and blue basis colours
++    // land. custom_blue_color overrides the blue column, which is what carries
++    // LaTeX hyperref links; negative keeps upstream's formula.
++    float blue_r = CUSTOM_BLUE_COLOR[0] >= 0 ? CUSTOM_BLUE_COLOR[0] : 0.0f;
++    float blue_g = CUSTOM_BLUE_COLOR[0] >= 0 ? CUSTOM_BLUE_COLOR[1]
++        : CUSTOM_COLOR_CONTRAST * (1 - CUSTOM_BACKGROUND_COLOR[1]);
++    float blue_b = CUSTOM_BLUE_COLOR[0] >= 0 ? CUSTOM_BLUE_COLOR[2] : 1.0f;
++
+     float outputs[16] = {
+-        CUSTOM_BACKGROUND_COLOR[0], CUSTOM_TEXT_COLOR[0], 1, 0,
+-        CUSTOM_BACKGROUND_COLOR[1], CUSTOM_TEXT_COLOR[1], CUSTOM_COLOR_CONTRAST * (1 - CUSTOM_BACKGROUND_COLOR[1]), CUSTOM_COLOR_CONTRAST * (1 - CUSTOM_BACKGROUND_COLOR[1]),
+-        CUSTOM_BACKGROUND_COLOR[2], CUSTOM_TEXT_COLOR[2], 0, 1,
++        CUSTOM_BACKGROUND_COLOR[0], CUSTOM_TEXT_COLOR[0], 1, blue_r,
++        CUSTOM_BACKGROUND_COLOR[1], CUSTOM_TEXT_COLOR[1], CUSTOM_COLOR_CONTRAST * (1 - CUSTOM_BACKGROUND_COLOR[1]), blue_g,
++        CUSTOM_BACKGROUND_COLOR[2], CUSTOM_TEXT_COLOR[2], 0, blue_b,
+         1, 1, 1, 1,
+     };
+ 
+diff --git a/pdf_viewer/utils.cpp b/pdf_viewer/utils.cpp
+index 7b2e32d..115c3d5 100644
+--- a/pdf_viewer/utils.cpp
++++ b/pdf_viewer/utils.cpp
+@@ -47,6 +47,7 @@ extern std::wstring GOOGLE_SCHOLAR_ADDRESS;
+ extern std::ofstream LOG_FILE;
+ extern int STATUS_BAR_FONT_SIZE;
+ extern float STATUS_BAR_COLOR[3];
++extern float STATUS_BAR_ALPHA;
+ extern float STATUS_BAR_TEXT_COLOR[3];
+ extern float UI_SELECTED_TEXT_COLOR[3];
+ extern float UI_SELECTED_BACKGROUND_COLOR[3];
+@@ -2674,6 +2675,22 @@ QString get_ui_stylesheet(bool nofont, int font_size) {
+ }
+ 
+ QString get_status_stylesheet(bool nofont, int font_size) {
++    // get_color_stylesheet emits an opaque #rrggbb. When status_bar_alpha is
++    // below 1.0, emit rgba() instead so the page shows through the bar.
++    if (STATUS_BAR_ALPHA < 1.0f) {
++        QString background = QString("rgba(%1, %2, %3, %4)")
++            .arg(static_cast<int>(STATUS_BAR_COLOR[0] * 255.0f))
++            .arg(static_cast<int>(STATUS_BAR_COLOR[1] * 255.0f))
++            .arg(static_cast<int>(STATUS_BAR_COLOR[2] * 255.0f))
++            .arg(STATUS_BAR_ALPHA, 0, 'f', 3);
++        QString foreground = get_color_qml_string(
++            STATUS_BAR_TEXT_COLOR[0], STATUS_BAR_TEXT_COLOR[1], STATUS_BAR_TEXT_COLOR[2]);
++        int size = font_size > 0 ? font_size : STATUS_BAR_FONT_SIZE;
++        QString font_part = ((!nofont) && (size > -1))
++            ? QString(" font-size: %1px;").arg(size) : QString();
++        return QString("background-color: %1; color: %2; border: 0;%3")
++            .arg(background, foreground, font_part);
++    }
+     return get_color_stylesheet(STATUS_BAR_COLOR, STATUS_BAR_TEXT_COLOR, nofont, font_size);
+ }
+ 

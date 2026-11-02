@@ -1,0 +1,467 @@
+/* Rose Pine for Spotify - colours and surfaces only.
+ *
+ * Spotify hashes its class names per build, so `.main-*` and `.encore-*`
+ * selectors are guesses that silently stop matching. Everything here was
+ * verified against the live DOM over the Chrome DevTools Protocol. The
+ * stable hooks are: real tags (nav), data-testid, data-encore-id, structural
+ * :has(), and attribute selectors on the inline style string.
+ */
+
+/* ---- surfaces -------------------------------------------------------- */
+/* Spotify 1.2+ paints its main areas from these encore variables; a colour
+ * scheme alone does not reach them and ~21% of the window stayed #242424. */
+:root {
+  --background-base:                var(--spice-main) !important;
+  --background-highlight:           var(--spice-card);
+  --background-press:               var(--spice-main);
+  --background-elevated-base:       var(--spice-main);
+  --background-elevated-highlight:  var(--spice-card);
+  --background-unsafe-for-overlay:  var(--spice-main);
+  --extracted-entity-color:         var(--spice-main);
+  --card-color:                     var(--spice-main);
+}
+
+/* .main-view-container__scroll-node must NOT be given a background-color.
+ * Playlist and daylist pages paint their header art on an absolutely
+ * positioned div that sits BELOW that node in paint order, so an opaque
+ * fill there hides the artwork completely. The page colour already comes
+ * from <html> and the app frame, so nothing is lost by leaving it alone. */
+
+/* Some encore variables are redefined inside class-scoped rules, where a
+ * :root value cannot reach them - `--background-base:#000000` appears in
+ * four such rules, `--background-tinted-*:#000000` in eight, and
+ * `.encore-muted-accent-set` pins `--text-subdued:#a7a7a7`. Declaring
+ * them on the universal selector with !important outranks those (a class
+ * rule still wins only if it is more specific still - hence the doubled
+ * attribute selector on the accent scope below).
+ * The values replace Spotify's greys with real palette entries:
+ *   #7c7c7c / #a7a7a7 greys -> subtle, and the rgba(text,10-21%) tints ->
+ *   the highlight_low/med/high ladder, so no composited in-between colour
+ *   is left for a picker to find. */
+*, *::before, *::after,
+[class][class], [class][class]::before, [class][class]::after {
+  /* NB: the --background-* family is deliberately NOT forced here. Custom
+   * properties inherit, so re-declaring one on every element clobbers the
+   * value a scope further up was passing down - the selected filter chip
+   * ended up with --background-base from this rule and --text-base from
+   * the accent scope, i.e. #26233a text on a #26233a pill. Those stay on
+   * :root, where inheritance still works. */
+  --background-tinted-base:          #403d52             !important;
+  --background-tinted-highlight:     #524f67             !important;
+  --background-tinted-press:         #6e6a86             !important;
+  --text-subdued:                    var(--spice-subtext) !important;
+  --essential-subdued:               var(--spice-subtext) !important;
+  --spice-highlight:                 #403d52             !important;
+  --carousel-start-chevron-gradient: var(--spice-main)   !important;
+  --carousel-end-chevron-gradient:   var(--spice-main)   !important;
+}
+
+/* ---- extracted album colour ------------------------------------------
+ * Spotify samples each cover and writes the result as an INLINE custom
+ * property, which beats any :root value for that element's subtree. A
+ * stylesheet !important still outranks a non-important inline declaration,
+ * so re-declare the same names here. Live counts on the home view:
+ * --card-color 95x (the square behind every grid cover),
+ * --background-color 20x (big shelf cards), --background-base 1x (the
+ * entity header, e.g. #70a8e8 for one playlist, #5038a0 for another).
+ * Album art is an <img>, so none of this touches the artwork itself. */
+[style*="--card-color"]        { --card-color:       var(--spice-main) !important; }
+[style*="--background-color"]  { --background-color: var(--spice-main) !important; }
+/* Spotify does not stop at one property: on the entity header, the metadata
+ * row and the right-hand cards it writes an ENTIRE extracted encore colour
+ * set inline - 25 variables of raw grey (#353535, #CDCDCD, #FFFFFF) plus
+ * Spotify green #1ED760 for every accent. That is why one line of the
+ * header could show three different tints at once, and why the about-the-
+ * artist card sat off-theme. Re-declare the whole set. The selector only
+ * matches elements that declare these inline themselves, so unlike a
+ * universal rule it cannot clobber a value a scope is passing down. */
+[style*="--text-base"],
+[style*="--essential-base"],
+[style*="--decorative-base"],
+[style*="--background-base"] {
+  --text-base:                     var(--spice-text)    !important;
+  --text-subdued:                  var(--spice-subtext) !important;
+  --text-bright-accent:            var(--spice-button)  !important;
+  --text-negative:                 #eb6f92              !important;
+  --text-warning:                  #f6c177              !important;
+  --text-positive:                 #9ccfd8              !important;
+  --text-announcement:             #c4a7e7              !important;
+
+  --essential-base:                var(--spice-text)    !important;
+  --essential-subdued:             var(--spice-subtext) !important;
+  --essential-bright-accent:       var(--spice-button)  !important;
+  --essential-negative:            #eb6f92              !important;
+  --essential-warning:             #f6c177              !important;
+  --essential-positive:            #9ccfd8              !important;
+  --essential-announcement:        #c4a7e7              !important;
+
+  --decorative-base:               var(--spice-text)    !important;
+  --decorative-subdued:            #403d52              !important;
+
+  --background-base:               var(--spice-main)    !important;
+  --background-base-70:            var(--spice-main)    !important;
+  --background-base-min-contrast:  var(--spice-card)    !important;
+  --background-highlight:          var(--spice-card)    !important;
+  --background-press:              var(--spice-main)    !important;
+  --background-elevated-base:      var(--spice-main)    !important;
+  --background-elevated-highlight: var(--spice-card)    !important;
+  --background-elevated-press:     var(--spice-main)    !important;
+  --background-tinted-base:        #403d52              !important;
+  --background-tinted-highlight:   #524f67              !important;
+  --background-tinted-press:       #6e6a86              !important;
+}
+
+/* Within that same extracted scope - which is exactly the header metadata
+ * row - splits cleanly in the DOM: the prose runs ("Made for", the save
+ * count, the track count, the separators) are encore text nodes, while the
+ * description, the owner and the duration are plain <a>/<span> with no
+ * data-encore-id. So the alternation is a rule, not an accident - encore
+ * runs rose, everything else in the block white:
+ *
+ *   get lost in the aesthetic   <a>           white
+ *   Made for                    encore text   rose
+ *   Townes                      <a>           white
+ *   348.734 saves               encore text   rose
+ *   100 songs                   encore text   rose
+ *   5 hr 34 min                 <span>        white
+ *
+ * The encore rule is (0,2,0) and the fallback (0,1,1), so rose runs stay
+ * rose inside the white containers. */
+/* Keying this off the inline scope was wrong: playlists with a full-bleed
+ * hero image do not get that inline colour set at all, so the rule simply
+ * never matched there and those headers stayed on Spotify's own tints. The
+ * metadata row is instead identified by what only it contains - the owner
+ * link - while excluding the wrappers that also hold the <h1>. That holds
+ * on both header variants. The owner is rose along with the prose runs; the
+ * description links and the duration stay white. */
+[data-testid="entity-header"] div:has(a[href^="/user/"]):not(:has(h1)) [data-encore-id="text"],
+[data-testid="entity-header"] div:has(a[href^="/user/"]):not(:has(h1)) a[href^="/user/"] {
+  color: var(--spice-button) !important;
+}
+[data-testid="entity-header"] div:has(a[href^="/user/"]):not(:has(h1)) a:not([href^="/user/"]),
+[data-testid="entity-header"] div:has(a[href^="/user/"]):not(:has(h1)) span:not([data-encore-id]) {
+  color: var(--spice-text) !important;
+}
+
+/* The description is the bare <div> immediately after the span wrapping the
+ * <h1> - it sits outside the metadata row, so neither rule above reached it
+ * and on some playlists its inner run renders subdued. */
+[data-testid="entity-header"] span:has(h1) + div,
+[data-testid="entity-header"] span:has(h1) + div * {
+  color: var(--spice-text) !important;
+}
+
+/* Track and artist names in the right panel sit on top of the canvas, where
+ * subtext grey-purple has nothing to hold on to. Links there go to full
+ * text colour. */
+aside:not([data-testid="now-playing-bar"]) a,
+aside:not([data-testid="now-playing-bar"]) a span[data-encore-id="text"] {
+  color: var(--spice-text) !important;
+}
+
+/* The panel header's own controls - collapse, more, expand - sit directly
+ * on the canvas too and were subdued grey-purple against it. Scoped to the
+ * right panel's header row: the player bar is also an <aside>, but it is
+ * the one carrying data-testid="now-playing-bar", so excluding that leaves
+ * exactly this header (its rose add-to-playlist button is elsewhere in the
+ * panel and keeps its colour). */
+aside:not([data-testid="now-playing-bar"]) > div > div:first-child button,
+aside:not([data-testid="now-playing-bar"]) > div > div:first-child button svg,
+aside:not([data-testid="now-playing-bar"]) > div > div:first-child button path {
+  color: var(--spice-text) !important;
+  fill:  var(--spice-text) !important;
+}
+
+/* The save toggle sits in the same block as the track title, also on the
+ * canvas. It carries no data-testid and its container is five levels deep,
+ * so matching on the aria-label is the least brittle hook available - it is
+ * the only Add/Remove control in this panel (track rows use "More options").
+ * This one is locale-dependent; if the client language changes, the button
+ * reverts to subdued and this selector needs the new verb. */
+aside:not([data-testid="now-playing-bar"]) button[aria-label^="Add to"],
+aside:not([data-testid="now-playing-bar"]) button[aria-label^="Remove from"],
+aside:not([data-testid="now-playing-bar"]) button[aria-label^="Add to"] svg,
+aside:not([data-testid="now-playing-bar"]) button[aria-label^="Remove from"] svg {
+  color: var(--spice-text) !important;
+  fill:  var(--spice-text) !important;
+}
+
+/* The lyrics card is extracted the same way - rgba(101,0,0) for one track,
+ * which is the last off-palette surface left in the window. */
+[style*="--lyrics-color-"] {
+  /* Each track carries its own signature colour in --lyrics-color-background.
+   * Earlier versions replaced it - first with a fixed card, then with a
+   * seven-hue ramp across the TEXT - but the colour is meant to be the
+   * card itself, one per song. So the variable is left alone and the card
+   * is painted from it, mixed down over an iris-tinted base: 35% of the
+   * track's colour keeps every song distinct, the other 65% is shared, so
+   * they all sit on the same surface instead of flying off to #650000.
+   * All three lyric states are text colour: the card carries the colour, so
+   * the words do not need to, and Spotify still marks the line being sung
+   * by weight and scale rather than by tint. */
+  background-color: color-mix(in oklab,
+      var(--lyrics-color-background) 35%,
+      color-mix(in oklab, #c4a7e7 12%, #1f1d2e)) !important;
+  --lyrics-color-active:   var(--spice-text) !important;
+  --lyrics-color-passed:   var(--spice-text) !important;
+  --lyrics-color-inactive: var(--spice-text) !important;
+}
+
+/* Older builds wrote the same colour as a plain inline background-color. */
+main [style*="background-color"] {
+  background-color: var(--spice-main) !important;
+}
+
+/* ---- scrims and fades -------------------------------------------------
+ */
+/* Every gradient background in this client is a black scrim laid over the
+ * page colour - the entity header fades to rgba(0,0,0,.5), the action bar
+ * under it to rgba(0,0,0,.6), the shelf edges to rgba(18,18,18,.7). Over
+ * #26233a those composite to #111019, which is the colour that keeps
+ * showing up in a picker. A survey of the whole document found 8 distinct
+ * gradient backgrounds and not one of them is content, so remove them all
+ * rather than chase hashed class names that change every release.
+ *
+ * Two exceptions are carved out:
+ *   - anything with url() in its INLINE style is real artwork, left alone;
+ *   - when that inline style layers `gradient, url(art)` the scrim cannot
+ *     be removed on its own, so background-size collapses it to 0x0 and
+ *     the artwork underneath keeps `cover`;
+ *   - the tracklist and library skeletons paint their placeholder art from
+ *     a --placeholder-image custom property on an ancestor, so their whole
+ *     subtree is spared. Without this a playlist shows no covers while it
+ *     loads. */
+*:not([style*="url("]):not([style*="--placeholder"] *),
+*:not([style*="url("]):not([style*="--placeholder"] *)::before,
+*:not([style*="url("]):not([style*="--placeholder"] *)::after {
+  background-image: none !important;
+}
+[style*="gradient"][style*="url("] {
+  background-size: 0 0, cover !important;
+}
+
+/* Header art needs *some* scrim or the title is unreadable over it - the
+ * point of removing Spotify's was that it was black. Put one back in the
+ * theme's own overlay colour instead, as a gradient so the top of the photo
+ * stays close to untouched and only the band the text sits in is covered.
+ * The hook is the inline style *starting* its background-image with url(,
+ * which is the full-bleed header art; the now-playing cover in the right
+ * panel writes `linear-gradient(...), url(...)` and so is left alone. */
+/* A flat wash of the theme's overlay colour across the whole image - not a
+ * fade. Done as an inset box-shadow rather than an ::after overlay because
+ * the header art is already position:absolute, and forcing position:relative
+ * on it to anchor a pseudo-element collapses its layout and hides it. An
+ * inset shadow tints in place and changes nothing about the box.
+ * Doubled attribute selector so it outranks the global box-shadow reset
+ * further down, which has the same specificity but comes later. */
+[style][style*="background-image: url("],
+[style][style*="gradient"][style*="url("] {
+  box-shadow: inset 0 0 0 9999px rgba(38, 35, 58, 0.55) !important;
+}
+
+/* The now-playing Canvas is a <video>, which an inset shadow cannot tint
+ * because replaced content paints above it. Overlay its wrapper instead -
+ * that wrapper is position:static, so promoting it to relative is safe
+ * (promoting the *header* art the same way is not, which is why that one
+ * uses a shadow). Same 55% wash, so a bright canvas reads like the rest. */
+div:has(> video) { position: relative; }
+div:has(> video)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* Exactly the wash the header art gets, so a canvas and a cover photo
+   * read the same. No mix-blend-mode: a blend recolours everything beneath
+   * the overlay, and this wrapper is 6px taller than the video, so it was
+   * tinting the page background past the video's bottom edge - the purple
+   * bleed under the canvas. A plain translucent fill of the page colour
+   * over the page colour is invisible, so the overhang stops mattering. */
+  background-color: rgba(38, 35, 58, 0.55);
+}
+div:has(> video) > video {
+  /* Only enough to stop a near-white canvas blowing out under the wash. */
+  filter: brightness(0.85) saturate(0.95) !important;
+}
+}
+
+/* Two more flat rgba(0,0,0,.6) sheets: one in the top bar, as the header's
+ * grandchild, and one on the ::after of the main view's sticky header - the
+ * strip the filter chips sit in. background-image:none does not reach a
+ * background-color, so clear them explicitly. Inside <main> the only
+ * pseudo-element backgrounds are these scrims; the canvas wash above lives
+ * in <aside> and so is unaffected. */
+[data-testid="topbar"] > div > div {
+  background-color: transparent !important;
+}
+main *::before,
+main *::after {
+  background-color: transparent !important;
+}
+
+/* The clipped last card in a horizontal shelf used to end on a hard edge
+ * once the scrims were gone. Spotify's own fade is applied only in some
+ * states, so mask the scroll container directly: alpha drops to 0 over the
+ * last 96px, which dissolves the card into --spice-main rather than into a
+ * dark smear. Only the right edge fades - fading the left would clip the
+ * first card at rest, and the shelf is scrolled from the left. */
+[data-testid="component-shelf"] > div > [role="presentation"] {
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 96px), transparent 100%);
+          mask-image: linear-gradient(90deg, #000 calc(100% - 96px), transparent 100%);
+}
+
+/* Horizontal shelves already fade their own right edge with a 120px mask,
+ * which dissolves the clipped card into whatever is painted behind it. That
+ * is the effect we want; it only ever looked like a dark smear because the
+ * black ::before/::after scrims above were drawn on top of it. With those
+ * gone the mask fades straight into --spice-main, so it is left in place. */
+
+/* ---- cover art ------------------------------------------------------- */
+/* Sidebar covers sat on an opaque #1f1d2e fill (the --spice-card fallback)
+ * plus a 60px dark glow; grid cards carry 0 8px 24px #00000080, and the
+ * hover play button adds 0 8px 8px #0000004d. None of it goes through a
+ * variable and the class names are hashed, so match structurally. */
+nav div:has(> img),
+nav img {
+  background-color: var(--spice-main) !important;
+}
+/* Every box-shadow in this client is black laid over the page colour: the
+ * sticky library header drops 0 6px 10px rgba(0,0,0,.6) onto the first row,
+ * grid cards carry 0 8px 24px #00000080 and hover play buttons 0 8px 8px
+ * #0000004d. On a flat surface they all read as smudges rather than depth,
+ * so drop them - except on whatever has keyboard focus, where the ring is
+ * the only thing marking it. */
+*:not(:focus-visible),
+*:not(:focus-visible)::before,
+*:not(:focus-visible)::after {
+  box-shadow: none !important;
+}
+
+/* ---- controls -------------------------------------------------------- */
+/* The player controls are styled at runtime, so no static class matches.
+ * data-testid is the stable hook, and the tag must NOT be qualified - the
+ * attribute does not always sit on a <button>. */
+[data-testid="control-button-playpause"] {
+  background-color: var(--spice-button) !important;
+  border-color: var(--spice-button) !important;
+}
+[data-testid="control-button-playpause"] svg,
+[data-testid="control-button-playpause"] path {
+  color: var(--spice-main) !important;
+  fill: var(--spice-main) !important;
+}
+
+/* Primary buttons ("Follow", pills, every card play button) sit in this
+ * scope, which supplies its own green. The ones outside it fall back to
+ * --text-base and render near-white, so pin the inner surface too. */
+/* Doubled attribute selector so this still outranks the forced block. */
+[class][class].encore-bright-accent-set {
+  --background-base:       var(--spice-button) !important;
+  --background-highlight:  var(--spice-button-active) !important;
+  --background-press:      var(--spice-button-active) !important;
+  --text-base:             var(--spice-main) !important;
+}
+[class*="button-primary__inner"] {
+  background-color: var(--spice-button) !important;
+  color: var(--spice-main) !important;
+}
+
+/* Progress and loading indicators are hardcoded #d9d9d9, the one grey left
+ * in the client that no variable reaches. The slider troughs behind them
+ * are rgba(224,222,244,.3), which composites to #5e5c71 - close to
+ * highlight_high but not it, so pin them to the real palette entry. */
+[data-testid="progressBarFg"],
+[aria-label="Loading"] > div {
+  background-color: var(--spice-text) !important;
+}
+[data-testid="progress-bar-background"] {
+  background-color: #524f67 !important;
+}
+
+/* Every control in the player bar reads rose; the two sliders are divs, not
+ * buttons, so their fills are untouched. The play/pause disc keeps a dark
+ * glyph because its own background is already rose - that rule is below and
+ * must stay after this one. */
+[data-testid="now-playing-bar"] button,
+[data-testid="now-playing-bar"] button svg,
+[data-testid="now-playing-bar"] button path {
+  color: var(--spice-button) !important;
+  fill:  var(--spice-button) !important;
+}
+[data-testid="now-playing-bar"] [data-testid="control-button-playpause"] svg,
+[data-testid="now-playing-bar"] [data-testid="control-button-playpause"] path {
+  color: var(--spice-main) !important;
+  fill:  var(--spice-main) !important;
+}
+
+/* The search suggestions popover is a descendant of the search form and is
+ * sized width:100% of it, so when the bar collapses on blur the list
+ * collapses with it and is left hanging as a 48px sliver. This reproduces
+ * with the theme disabled, so it is Spotify's, not ours - but it is a
+ * one-line fix here. Tie the list to the same condition that drives the
+ * bar's width. :focus-within still holds while a suggestion is being
+ * clicked, because the list sits inside the form. */
+form[role="search"]:not(:focus-within) [role="listbox"] {
+  display: none !important;
+}
+
+/* Icons Spotify hardcodes outside its own variables. The verified badge is
+ * #c5f0c9, the progress rings stroke #1ED760 / #1ED727 over a #121212 hole,
+ * and the now-playing cover placeholder is #6b6b6b - the last Spotify
+ * greens and greys rendering anywhere in the window. */
+[class*="verified"],
+[class*="verified"] path {
+  fill: var(--spice-button) !important;
+}
+circle[stroke]:not([stroke="none"]) {
+  stroke: var(--spice-button) !important;
+}
+circle[fill="#121212"] {
+  fill: var(--spice-main) !important;
+}
+[data-testid="cover-art-button"] {
+  background-color: var(--spice-card) !important;
+}
+
+/* The overscroll backdrop - the colour that shows when a page is dragged
+ * past its end - is painted from the extracted colour at 70% and reaches
+ * for it outside the inline scopes patched above, so it still came through
+ * as rgba(8,40,120,.7) on one page and rgba(53,53,53,.7) on another. */
+[data-testid="overscroll-background"] {
+  background-color: var(--spice-main) !important;
+}
+
+/* The playlist action bar - shuffle, save, download, more, search and the
+ * sort control - sits on the page rather than on artwork, and reads as a
+ * row of accents. Two exclusions: the watch-feed thumbnail is artwork and
+ * is left alone, and the primary play disc is already a rose circle, so
+ * tinting its glyph would put rose on rose and make the triangle vanish -
+ * the same trap as the player bar. */
+[data-testid="action-bar-row"] button:not([data-testid="watch-feed-entity-button"]):not([class*="button-primary"]),
+[data-testid="action-bar-row"] button:not([data-testid="watch-feed-entity-button"]):not([class*="button-primary"]) svg,
+[data-testid="action-bar-row"] button:not([data-testid="watch-feed-entity-button"]):not([class*="button-primary"]) path,
+[data-testid="action-bar-row"] button:not([data-testid="watch-feed-entity-button"]):not([class*="button-primary"]) span {
+  color: var(--spice-button) !important;
+  fill:  var(--spice-button) !important;
+}
+
+/* The header art is clipped by the main view panel, which is rounded 8px,
+ * so its top corners follow that radius while the bottom two are just where
+ * the image stops - square against the page. Round its own clip box to the
+ * same 8px so all four corners match. The wrapper is the element whose
+ * direct child carries the inline artwork url. */
+.main-view-container div:has(> [style*="background-image: url("]) {
+  border-radius: 8px !important;
+}
+
+/* ---- removed ---------------------------------------------------------
+ * These matched nothing in the live DOM and were deleted rather than left
+ * as decoration: .Root__nav-bar, .Root__right-sidebar, .main-navBar-navBar,
+ * .main-yourLibraryX-{libraryContainer,libraryRootlist,libraryItemContainer,
+ * header,entryPoints,navBar}, .main-playButton-PlayButton,
+ * .main-playPauseButton-button, .main-card-PlayButtonContainer, the
+ * .encore-app-frame-set / .encore-base-set tinted-variable overrides, and
+ * [data-seamless-gradient]. The blanket
+ * `main [style*="background-image"] { background-image: none }` was dropped
+ * too: it also erased inline cover artwork. The gradient-specific rules
+ * above replace it.
+ * ---------------------------------------------------------------------- */

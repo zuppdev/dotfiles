@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><link rel="stylesheet" href="popup.css"></head>
+<body>
+  <header>
+    <span class="dot"></span>
+    <h1>Rosé Pine</h1>
+  </header>
+
+  <label class="row">
+    <span class="label"><strong id="site">this site</strong><em>theme this site</em></span>
+    <input type="checkbox" id="site-toggle">
+  </label>
+
+  <div class="row stack">
+    <span class="label"><strong>Apply</strong><em>default for every site</em></span>
+    <div class="seg" id="mode-seg">
+      <button data-mode="auto">Auto</button>
+      <button data-mode="always">Always</button>
+      <button data-mode="never">Never</button>
+    </div>
+  </div>
+
+  <div class="row stack">
+    <span class="label"><strong>Palette</strong><em>Rice matches iTerm, VS&nbsp;Code and Spotify</em></span>
+    <div class="seg" id="variant-seg">
+      <button data-variant="rice">Rice</button>
+      <button data-variant="moon">Moon</button>
+      <button data-variant="main">Main</button>
+    </div>
+  </div>
+
+  <label class="row">
+    <span class="label"><strong>Strict palette</strong><em>snap to the 15 colours exactly</em></span>
+    <input type="checkbox" id="strict-toggle">
+  </label>
+
+  <div class="row stack">
+    <span class="label"><strong>Image brightness</strong><em id="dim-value">90%</em></span>
+    <input type="range" id="dim" min="40" max="100" step="5">
+  </div>
+
+  <div class="row stack" id="diag-row">
+    <span class="label"><strong>Engine</strong><em id="diag">checking…</em></span>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

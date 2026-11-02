@@ -1,0 +1,102 @@
+# Amethyst config. Format: https://github.com/ianyh/Amethyst
+# Restart Amethyst to pick up changes.
+
+layouts:
+  - tall
+  - wide
+  - fullscreen
+  - column
+
+mod1:
+  - option
+  - shift
+mod2:
+  - option
+  - shift
+  - control
+
+# ---- Mouse-driven window management ----
+# This is why we moved off AeroSpace: drag a window onto another to swap them,
+# and drag an edge to resize the layout.
+mouse-swaps-windows: true
+mouse-resizes-windows: true
+mouse-follows-focus: false
+focus-follows-mouse: false
+
+# ---- Gaps ----
+window-margins: true
+smart-window-margins: false
+
+# Target: every gap = 7, matching the apple pill's 7pt gap to the screen edge.
+#
+# Amethyst halves window-margin-size per side and rounds down, so:
+#   margin 7 -> 3 per side -> 6 between windows
+#   margin 8 -> 4 per side -> 8 between windows
+# No integer yields 7 between windows. Edge gap = screen-padding + margin/2,
+# so padding 1 + margin 7 lands the EDGES on exactly 7 (the visible one,
+# against the screen border) and leaves 6 between windows.
+window-margin-size: 8
+screen-padding-left: 0
+screen-padding-right: 0
+screen-padding-bottom: 0
+# From the Figma slice (3024x1964 = 2x, so halve everything):
+#   windows at left/right/bottom 15px -> 7.5pt; between windows 15px -> 7.5pt
+#   window top 79px -> 39.5pt, i.e. flush with the 40pt bar's bottom edge
+# Amethyst: between = margin, edge = screen-padding + margin. margin 8 gives
+# 8 both (7.5 is not reachable). Top: 32 + 8 = 40, flush with the bar.
+screen-padding-top: 32
+
+disable-padding-on-builtin-display: false
+
+# Keep small utility windows out of the tiling
+float-small-windows: true
+small-window-size: 500
+floating-is-blacklist: true
+floating:
+  - com.apple.systempreferences
+  - com.apple.ActivityMonitor
+  - com.apple.calculator
+  - com.apple.archiveutility
+  - com.apple.PhotoBooth
+
+ignore-menu-bar: true   # include the menu-bar strip in the screen frame.
+                        # Without this the built-in starts 32pt lower than
+                        # the external (it reserves the notch strip), and
+                        # Amethyst has only ONE global screen-padding-top,
+                        # so the two displays can never agree.
+hide-menu-bar-icon: false
+enables-layout-hud: true
+enables-layout-hud-on-space-change: true
+new-windows-to-main: false
+follow-space-thrown-windows: true
+window-resize-step: 5
+restore-layouts-on-launch: true
+
+# ---- Keys (mod1 = opt+shift, mod2 = opt+shift+ctrl) ----
+cycle-layout:        { mod: mod1, key: space }
+cycle-layout-backward: { mod: mod2, key: space }
+shrink-main:         { mod: mod1, key: h }
+expand-main:         { mod: mod1, key: l }
+increase-main:       { mod: mod1, key: ',' }
+decrease-main:       { mod: mod1, key: '.' }
+focus-ccw:           { mod: mod1, key: j }
+focus-cw:            { mod: mod1, key: k }
+focus-main:          { mod: mod1, key: m }
+focus-screen-ccw:    { mod: mod1, key: p }
+focus-screen-cw:     { mod: mod1, key: n }
+swap-screen-ccw:     { mod: mod2, key: h }
+swap-screen-cw:      { mod: mod2, key: l }
+swap-ccw:            { mod: mod2, key: j }
+swap-cw:             { mod: mod2, key: k }
+swap-main:           { mod: mod1, key: enter }
+select-tall-layout:  { mod: mod1, key: a }
+select-wide-layout:  { mod: mod1, key: s }
+select-fullscreen-layout: { mod: mod1, key: d }
+select-column-layout: { mod: mod1, key: f }
+throw-space-left:    { mod: mod2, key: left }
+throw-space-right:   { mod: mod2, key: right }
+toggle-float:        { mod: mod1, key: t }
+toggle-tiling:       { mod: mod2, key: t }
+reevaluate-windows:  { mod: mod1, key: z }
+display-current-layout: { mod: mod1, key: i }
+relaunch-amethyst:   { mod: mod2, key: z }

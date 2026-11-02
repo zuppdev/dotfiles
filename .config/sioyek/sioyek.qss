@@ -1,0 +1,5 @@
+/* With NSWindowStyleMaskFullSizeContentView the content view extends under
+   the titlebar, and Qt paints that strip with its own palette (#1e1e1e),
+   covering the NSWindow background that macos_titlebar_color sets. Paint it
+   base so the window reads as one surface. */
+MainWidget, QMainWindow { background-color: #252338; }

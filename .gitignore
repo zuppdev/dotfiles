@@ -1,0 +1,18 @@
+# Compiled helper binaries - rebuild with `make` in helpers/
+.config/sketchybar/helpers/**/bin/
+*.o
+
+# Generated at runtime by helpers/wallpaper_theme.py
+.config/sketchybar/wallpaper_colors.lua
+
+.DS_Store
+
+*.backup
+*.orig
+*.bak
+*.felixkratz
+*.wallpaper-aware
+*.preclaude
+*.claudever
+
+safari-rose-pine/build/
